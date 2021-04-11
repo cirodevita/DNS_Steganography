@@ -1,0 +1,4 @@
+dnslib==0.9.7
+scapy~=2.4.4
+cryptography~=3.4.7
+psutil~=5.8.0
