@@ -45,7 +45,6 @@ class Resolver(ProxyResolver):
         self.end = False
 
     def resolve(self, request, handler):
-        print(request)
         if request.a.rdata is not None:
             for x in range(32, 126):
                 for y in range(32, 126):
@@ -63,12 +62,43 @@ class Resolver(ProxyResolver):
                 self.framestore = []
 
                 try:
+                    message = Crypt.decrypt(combined_payloads.rstrip('/'))
                     f = open("received.txt", "w")
-                    f.write(Crypt.decrypt(combined_payloads.rstrip('/')))
+                    f.write(message)
                     f.close()
                 except Exception as e:
                     print(e)
                     pass
+
+        elif request.header.opcode == 1:
+            dns_id = request.header.id
+            binary = bin(dns_id)[2:].zfill(16)
+            c = chr(int(binary[8:], 2))
+            self.framestore.append(c)
+
+            try:
+                if len(self.framestore) > 0:
+                    if self.framestore[-1] == '/' and self.framestore[-2] == '/':
+                        self.end = True
+
+                    if self.end:
+                        combined_payloads = ''.join(self.framestore)
+
+                        self.end = False
+                        self.framestore = []
+
+                        try:
+                            message = Crypt.decrypt(combined_payloads.rstrip('/'))
+                            f = open("received.txt", "w")
+                            f.write(message)
+                            f.close()
+                        except Exception as e:
+                            print(e)
+                            pass
+            except Exception as e:
+                self.framestore = []
+                print(e)
+                pass
 
         return super().resolve(request, handler)
 
