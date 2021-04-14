@@ -73,7 +73,7 @@ class App(QMainWindow):
         if textboxValueServer == "" or textboxValue == "":
             QMessageBox.about(self, "Error", "Server DNS or message cannot be empty!")
         else:
-            self.send_message(textboxValue, self.combo_box.currentIndex())
+            self.send_message(textboxValueServer, textboxValue, self.combo_box.currentIndex())
             self.textbox.setText("")
 
 
@@ -95,7 +95,7 @@ class App(QMainWindow):
             pass
 
     @staticmethod
-    def send_message(message, method):
+    def send_message(server, message, method):
         f = open('dns.json')
         data = json.load(f)
         f.close()
@@ -133,7 +133,7 @@ class App(QMainWindow):
                 new_dns_id = int(binary, 2)
 
                 answer = sr1(
-                    IP(dst="127.0.0.1") / UDP(sport=RandShort(), dport=53) / DNS(id=new_dns_id, opcode=1, rd=1,
+                    IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=new_dns_id, rd=1,
                                                                                  qd=DNSQR(qname=fake_domain)), verbose=0)
 
                 print(repr(answer[DNS]))
@@ -151,7 +151,7 @@ class App(QMainWindow):
                     ttl = (ord(temp[0]) * 256 + ord('/')) * 2
 
                 answer = sr1(
-                    IP(dst="127.0.0.1") / UDP(sport=RandShort(), dport=53) / DNS(id=random.randint(0, 65535), rd=1, qd=DNSQR(qname=fake_domain),
+                    IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=random.randint(0, 65535), rd=1, qd=DNSQR(qname=fake_domain),
                                                                                  an=DNSRR(ttl=ttl, rrname=fake_domain,
                                                                                           rdata=ip)), verbose=0)
 
