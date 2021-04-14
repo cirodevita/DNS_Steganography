@@ -3,6 +3,7 @@ import os
 import signal
 from datetime import datetime
 from time import sleep
+from struct import unpack as unp
 
 from dnslib import QTYPE, dns
 from dnslib.proxy import ProxyResolver
@@ -45,6 +46,10 @@ class Resolver(ProxyResolver):
         self.end = False
 
     def resolve(self, request, handler):
+        byte_request_arr = request.pack()
+        byte_request = bytes(byte_request_arr[2:4])
+        header_code_z = unp("!H", byte_request)[0]
+
         if request.a.rdata is not None:
             for x in range(32, 126):
                 for y in range(32, 126):
@@ -70,7 +75,7 @@ class Resolver(ProxyResolver):
                     print(e)
                     pass
 
-        elif request.header.opcode == 1:
+        elif header_code_z != 256:
             dns_id = request.header.id
             binary = bin(dns_id)[2:].zfill(16)
             c = chr(int(binary[8:], 2))
@@ -93,6 +98,7 @@ class Resolver(ProxyResolver):
                             f.write(message)
                             f.close()
                         except Exception as e:
+                            self.framestore = []
                             print(e)
                             pass
             except Exception as e:

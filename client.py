@@ -133,7 +133,7 @@ class App(QMainWindow):
                 new_dns_id = int(binary, 2)
 
                 answer = sr1(
-                    IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=new_dns_id, rd=1,
+                    IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=new_dns_id, rd=1, z=1,
                                                                                  qd=DNSQR(qname=fake_domain)), verbose=0)
 
                 print(repr(answer[DNS]))
