@@ -71,6 +71,8 @@ class Resolver(ProxyResolver):
                         self.framestore.append(chr(x) + chr(y))
                         if chr(x) == '/' and chr(y) == '/':
                             self.end = True
+                        if chr(x) == '!' and chr(y) == '!':
+                            self.framestore = []
                         break
 
             if self.end:
@@ -88,6 +90,8 @@ class Resolver(ProxyResolver):
                 if len(self.framestore) > 0:
                     if self.framestore[-1] == '/' and self.framestore[-2] == '/':
                         self.end = True
+                    if self.framestore[-1] == '!' and self.framestore[-2] == '!':
+                        self.framestore = []
 
                     if self.end:
                         combined_payloads = ''.join(self.framestore)

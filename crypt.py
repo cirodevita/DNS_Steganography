@@ -1,7 +1,7 @@
 import base64
-from Crypto.Cipher import AES, XOR
+from Crypto.Cipher import XOR
 
-password = "secretpassword"
+password = "/A%D*G-KaPdSgVkY"
 
 
 class Crypt:
