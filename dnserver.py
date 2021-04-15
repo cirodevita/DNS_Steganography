@@ -45,6 +45,19 @@ class Resolver(ProxyResolver):
         self.framestore = []
         self.end = False
 
+    def save_on_file(self, payload):
+        self.end = False
+        self.framestore = []
+
+        try:
+            message = Crypt.decrypt(payload.rstrip('/'))
+            f = open("received.txt", "w")
+            f.write(message)
+            f.close()
+        except Exception as e:
+            print(e)
+            pass
+
     def resolve(self, request, handler):
         byte_request_arr = request.pack()
         byte_request = bytes(byte_request_arr[2:4])
@@ -63,17 +76,7 @@ class Resolver(ProxyResolver):
             if self.end:
                 combined_payloads = ''.join(self.framestore)
 
-                self.end = False
-                self.framestore = []
-
-                try:
-                    message = Crypt.decrypt(combined_payloads.rstrip('/'))
-                    f = open("received.txt", "w")
-                    f.write(message)
-                    f.close()
-                except Exception as e:
-                    print(e)
-                    pass
+                self.save_on_file(combined_payloads)
 
         elif header_code_z != 256:
             dns_id = request.header.id
@@ -89,18 +92,7 @@ class Resolver(ProxyResolver):
                     if self.end:
                         combined_payloads = ''.join(self.framestore)
 
-                        self.end = False
-                        self.framestore = []
-
-                        try:
-                            message = Crypt.decrypt(combined_payloads.rstrip('/'))
-                            f = open("received.txt", "w")
-                            f.write(message)
-                            f.close()
-                        except Exception as e:
-                            self.framestore = []
-                            print(e)
-                            pass
+                        self.save_on_file(combined_payloads)
             except Exception as e:
                 self.framestore = []
                 print(e)
