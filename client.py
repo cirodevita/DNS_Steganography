@@ -8,7 +8,7 @@ from scapy.layers.inet import IP, UDP
 from crypt import Crypt
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QLineEdit, QFileDialog, QLabel, QMessageBox, \
-    QComboBox, QListWidget, QListWidgetItem
+    QComboBox, QListWidget, QListWidgetItem, QAbstractItemView
 from PyQt5.QtCore import pyqtSlot, QDir
 from PyQt5 import Qt
 
@@ -62,7 +62,7 @@ class WorkThread(Qt.QThread):
                                                                                  qd=DNSQR(qname=fake_domain)), verbose=0)
 
                 self.threadSignal.emit(repr(answer[DNS]))
-                # time.sleep(random.randint(2, 10))
+                time.sleep(random.randint(2, 10))
         else:
             for i in range(0, len(message), 2):
                 temp = message[i:i + 2]
@@ -81,7 +81,7 @@ class WorkThread(Qt.QThread):
                                                                                           rdata=ip)), verbose=0)
 
                 self.threadSignal.emit(repr(answer[DNS]))
-                # time.sleep(random.randint(2, 10))
+                time.sleep(random.randint(2, 10))
 
         self.threadSignal.emit("END")
 
@@ -163,10 +163,11 @@ class App(QMainWindow):
             self.thread.start()
 
     def on_threadSignal(self, value):
+        self.list_widget.addItem(QListWidgetItem(value))
+        QAbstractItemView.scrollToBottom(self.list_widget)
+
         if value == "END":
             self.textbox.setText("")
-        else:
-            self.list_widget.addItem(QListWidgetItem(value))
 
     @pyqtSlot()
     def on_click_file(self):
