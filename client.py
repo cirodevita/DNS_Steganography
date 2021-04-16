@@ -55,10 +55,23 @@ class WorkThread(Qt.QThread):
         fake_domain = data[number_random]["dominio"]
         ip = data[number_random]["ip"]
 
+        ttl = random.randint(2468, 10468)
+        ttl_binary = bin(ttl)[2:].zfill(16)
+        len_binary = bin(len(message))[2:].zfill(8)
+
+        binary = ''
+        j = 0
+        for i in range(0, len(ttl_binary)):
+            if i % 2 != 0:
+                binary += len_binary[j]
+                j += 1
+            else:
+                binary += ttl_binary[i]
+
         answer = sr1(
             IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=random.randint(0, 65535), rd=1,
                                                                     qd=DNSQR(qname=fake_domain),
-                                                                    an=DNSRR(ttl=len(message), rrname=fake_domain,
+                                                                    an=DNSRR(ttl=int(binary, 2), rrname=fake_domain,
                                                                              rdata=ip)), verbose=0)
         self.threadSignal.emit(repr(answer[DNS]))
         # time.sleep(random.randint(2, 10))

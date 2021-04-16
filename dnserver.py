@@ -66,7 +66,14 @@ class Resolver(ProxyResolver):
         header_code_z = unp("!H", byte_request)[0]
 
         if request.a.rdata is not None:
-            self.length = int(request.a.ttl)
+            ttl = request.a.ttl
+            binary = bin(ttl)[2:].zfill(16)
+            final_binary = ''
+            for i in range(0, len(binary)):
+                if i % 2 != 0:
+                    final_binary += binary[i]
+
+            self.length = int(final_binary, 2)
             self.framestore = [None] * self.length
             self.current = 0
             self.current_i = 0
