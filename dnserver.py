@@ -43,10 +43,12 @@ class Resolver(ProxyResolver):
     def __init__(self, upstream):
         super().__init__(upstream, 53, 5)
         self.framestore = []
-        self.end = False
+        self.number = 0
+        self.length = 0
+        self.current = 0
+        self.current_i = 0
 
     def save_on_file(self, payload):
-        self.end = False
         self.framestore = []
 
         try:
@@ -64,6 +66,10 @@ class Resolver(ProxyResolver):
         header_code_z = unp("!H", byte_request)[0]
 
         if request.a.rdata is not None:
+            self.length = int(request.a.ttl)
+            print(self.length)
+            self.framestore = [None] * self.length
+            '''
             for x in range(32, 126):
                 for y in range(32, 126):
                     res = (x * 256 + y) * 2
@@ -79,28 +85,33 @@ class Resolver(ProxyResolver):
                 combined_payloads = ''.join(self.framestore)
 
                 self.save_on_file(combined_payloads)
+            '''
 
         elif header_code_z != 256:
             dns_id = request.header.id
             binary = bin(dns_id)[2:].zfill(16)
-            c = chr(int(binary[8:], 2))
-            self.framestore.append(c)
+            final_binary = ''
+            sequence_number = ''
+            for i in range(0, len(binary)):
+                if i % 2 == 0:
+                    final_binary += binary[i]
+                elif i < 8 and i % 2 != 0:
+                    sequence_number += binary[i]
 
-            try:
-                if len(self.framestore) > 0:
-                    if self.framestore[-1] == '/' and self.framestore[-2] == '/':
-                        self.end = True
-                    if self.framestore[-1] == '!' and self.framestore[-2] == '!':
-                        self.framestore = []
+            c = chr(int(final_binary, 2))
+            self.number = int(sequence_number, 2)
+            self.current += 1
 
-                    if self.end:
-                        combined_payloads = ''.join(self.framestore)
+            self.framestore[self.number + 16*self.current_i] = c
 
-                        self.save_on_file(combined_payloads)
-            except Exception as e:
-                self.framestore = []
-                print(e)
-                pass
+            if self.current % 16 == 0:
+                self.current_i += 1
+
+            if None not in self.framestore:
+                self.current = 0
+                self.current_i = 0
+                combined_payloads = ''.join(self.framestore)
+                self.save_on_file(combined_payloads)
 
         return super().resolve(request, handler)
 
