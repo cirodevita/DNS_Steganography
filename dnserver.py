@@ -67,8 +67,9 @@ class Resolver(ProxyResolver):
 
         if request.a.rdata is not None:
             self.length = int(request.a.ttl)
-            print(self.length)
             self.framestore = [None] * self.length
+            self.current = 0
+            self.current_i = 0
             '''
             for x in range(32, 126):
                 for y in range(32, 126):

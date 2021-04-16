@@ -34,8 +34,6 @@ class WorkThread(Qt.QThread):
         f.close()
 
         message = Crypt.encrypt(message)
-
-        # message = '!!' + message + '//'
         self.threadSignal.emit(message)
 
         start = False
@@ -67,8 +65,6 @@ class WorkThread(Qt.QThread):
 
         chunks = list(self.chunkstring(message, 16))
         for message in chunks:
-            print(message)
-
             for i in range(0, len(message)):
                 number_random = random.randint(0, len(data) - 1)
                 fake_domain = data[number_random]["dominio"]
