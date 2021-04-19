@@ -47,6 +47,19 @@ class Resolver(ProxyResolver):
         self.length = 0
         self.current = 0
         self.current_i = 0
+        self.pattern = -1
+
+    def countConsonants(self, string):
+        vowel = set("aeiouAEIOU")
+        c_count = 0
+        v_count = 0
+        for i in string:
+            if i in vowel:
+                v_count += 1
+            elif ('a' <= i <= 'z') or ('A' <= i <= 'Z'):
+                c_count += 1
+
+        return c_count, v_count
 
     def save_on_file(self, payload):
         self.framestore = []
@@ -61,65 +74,60 @@ class Resolver(ProxyResolver):
             pass
 
     def resolve(self, request, handler):
-        byte_request_arr = request.pack()
-        byte_request = bytes(byte_request_arr[2:4])
-        header_code_z = unp("!H", byte_request)[0]
+        #byte_request_arr = request.pack()
+        #byte_request = bytes(byte_request_arr[2:4])
+        #header_code_z = unp("!H", byte_request)[0]
 
-        if request.a.rdata is not None:
+        if request.a.rdata is not None and self.countConsonants(str(request.a.rname))[0] % 2 == 0 and self.countConsonants(str(request.a.rname))[1] >= 4:
             ttl = request.a.ttl
             binary = bin(ttl)[2:].zfill(16)
             final_binary = ''
+            pattern = ''
             for i in range(0, len(binary)):
                 if i % 2 != 0:
                     final_binary += binary[i]
+                elif i < 8 and i % 2 == 0:
+                    pattern += binary[i]
 
-            self.length = int(final_binary, 2)
-            self.framestore = [None] * self.length
-            self.current = 0
-            self.current_i = 0
-            '''
-            for x in range(32, 126):
-                for y in range(32, 126):
-                    res = (x * 256 + y) * 2
-                    if int(res) == int(request.a.ttl):
-                        self.framestore.append(chr(x) + chr(y))
-                        if chr(x) == '/' and chr(y) == '/':
-                            self.end = True
-                        if chr(x) == '!' and chr(y) == '!':
-                            self.framestore = []
-                        break
-
-            if self.end:
-                combined_payloads = ''.join(self.framestore)
-
-                self.save_on_file(combined_payloads)
-            '''
-
-        elif header_code_z != 256:
-            dns_id = request.header.id
-            binary = bin(dns_id)[2:].zfill(16)
-            final_binary = ''
-            sequence_number = ''
-            for i in range(0, len(binary)):
-                if i % 2 == 0:
-                    final_binary += binary[i]
-                elif i < 8 and i % 2 != 0:
-                    sequence_number += binary[i]
-
-            c = chr(int(final_binary, 2))
-            self.number = int(sequence_number, 2)
-            self.current += 1
-
-            self.framestore[self.number + 16*self.current_i] = c
-
-            if self.current % 16 == 0:
-                self.current_i += 1
-
-            if None not in self.framestore:
+            if pattern == "1011":
+                self.length = int(final_binary, 2)
+                self.pattern = int(pattern, 2)
+                self.framestore = [None] * self.length
                 self.current = 0
                 self.current_i = 0
-                combined_payloads = ''.join(self.framestore)
-                self.save_on_file(combined_payloads)
+
+        #elif header_code_z != 256:
+        else:
+            if self.pattern != -1:
+                dns_id = request.header.id
+                binary = bin(dns_id)[2:].zfill(16)
+                final_binary = ''
+                sequence_number = ''
+                pattern = ''
+                for i in range(0, len(binary)):
+                    if i % 2 == 0:
+                        final_binary += binary[i]
+                    elif i < 8 and i % 2 != 0:
+                        sequence_number += binary[i]
+                    else:
+                        pattern += binary[i]
+
+                if int(pattern, 2) == self.pattern:
+                    c = chr(int(final_binary, 2))
+                    self.number = int(sequence_number, 2)
+                    self.current += 1
+
+                    self.framestore[self.number + 16*self.current_i] = c
+
+                    if self.current % 16 == 0:
+                        self.current_i += 1
+
+                    if None not in self.framestore:
+                        self.current = 0
+                        self.current_i = 0
+                        self.pattern = -1
+                        combined_payloads = ''.join(self.framestore)
+                        self.save_on_file(combined_payloads)
 
         return super().resolve(request, handler)
 

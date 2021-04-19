@@ -25,6 +25,18 @@ class WorkThread(Qt.QThread):
         self.message = message
         # self.method = method
 
+    def countConsonants(self, string):
+        vowel = set("aeiouAEIOU")
+        v_count = 0
+        c_count = 0
+        for i in string:
+            if i in vowel:
+                v_count = v_count + 1
+            elif ('a' <= i <= 'z') or ('A' <= i <= 'Z'):
+                c_count += 1
+
+        return c_count, v_count
+
     def chunkstring(self, string, length):
         return (string[0 + i:length + i] for i in range(0, len(string), length))
 
@@ -51,20 +63,33 @@ class WorkThread(Qt.QThread):
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                     pass
 
-        number_random = random.randint(0, len(data) - 1)
-        fake_domain = data[number_random]["dominio"]
-        ip = data[number_random]["ip"]
+        found_domain = False
+
+        while not found_domain:
+            number_random = random.randint(0, len(data) - 1)
+            fake_domain = data[number_random]["dominio"]
+            ip = data[number_random]["ip"]
+
+            if self.countConsonants(fake_domain)[0] % 2 == 0 and self.countConsonants(fake_domain)[1] >= 4:
+                found_domain = True
 
         ttl = random.randint(2468, 10468)
         ttl_binary = bin(ttl)[2:].zfill(16)
         len_binary = bin(len(message))[2:].zfill(8)
+        #pattern = random.randint(0, 15)
+        #pattern_bin = bin(pattern)[2:].zfill(4)
+        pattern_bin = '1011'
 
         binary = ''
         j = 0
+        k = 0
         for i in range(0, len(ttl_binary)):
             if i % 2 != 0:
                 binary += len_binary[j]
                 j += 1
+            elif i < 8 and i % 2 == 0:
+                binary += pattern_bin[k]
+                k += 1
             else:
                 binary += ttl_binary[i]
 
@@ -74,7 +99,7 @@ class WorkThread(Qt.QThread):
                                                                     an=DNSRR(ttl=int(binary, 2), rrname=fake_domain,
                                                                              rdata=ip)), verbose=0)
         self.threadSignal.emit(repr(answer[DNS]))
-        # time.sleep(random.randint(2, 10))
+        #time.sleep(random.randint(2, 10))
 
         chunks = list(self.chunkstring(message, 16))
         for message in chunks:
@@ -89,6 +114,7 @@ class WorkThread(Qt.QThread):
                 sequence_number = bin(i)[2:].zfill(4)
                 j = 0
                 k = 0
+                z = 0
                 for i in range(0, len(binary_temp)):
                     if i % 2 == 0:
                         binary += message_binary[j]
@@ -97,38 +123,17 @@ class WorkThread(Qt.QThread):
                         binary += sequence_number[k]
                         k += 1
                     else:
-                        binary += binary_temp[i]
+                        binary += pattern_bin[z]
+                        z += 1
 
                 new_dns_id = int(binary, 2)
 
                 answer = sr1(
-                    IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=new_dns_id, rd=1, z=1,
+                    IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=new_dns_id, rd=1,
                                                                             qd=DNSQR(qname=fake_domain)), verbose=0)
 
                 self.threadSignal.emit(repr(answer[DNS]))
-                # time.sleep(random.randint(2, 10))
-
-        '''
-        for i in range(0, len(message), 2):
-            temp = message[i:i + 2]
-
-            number_random = random.randint(0, len(data) - 1)
-            fake_domain = data[number_random]["dominio"]
-            ip = data[number_random]["ip"]
-            try:
-                ttl = (ord(temp[0]) * 256 + ord(temp[1])) * 2
-            except:
-                ttl = (ord(temp[0]) * 256 + ord('/')) * 2
-
-            answer = sr1(
-                IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=random.randint(0, 65535), rd=1,
-                                                                        qd=DNSQR(qname=fake_domain),
-                                                                        an=DNSRR(ttl=ttl, rrname=fake_domain,
-                                                                                 rdata=ip)), verbose=0)
-
-            self.threadSignal.emit(repr(answer[DNS]))
-            time.sleep(random.randint(2, 10))
-        '''
+                #time.sleep(random.randint(2, 10))
 
         self.threadSignal.emit("END")
 
