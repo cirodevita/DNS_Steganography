@@ -1,4 +1,5 @@
 import logging
+import sys
 import os
 import signal
 from datetime import datetime
@@ -69,7 +70,8 @@ class Resolver(ProxyResolver):
         self.framestore = []
 
         try:
-            message = Crypt.decrypt(payload.rstrip('/'))
+            print(payload)
+            message = Crypt.decrypt(payload)
             f = open("received.txt", "w")
             f.write(message)
             f.close()
@@ -117,12 +119,17 @@ class Resolver(ProxyResolver):
                     else:
                         pattern += binary[i]
 
-                if int(pattern, 2) == self.pattern:
+                if int(pattern, 2) == self.pattern and self.countConsonants(str(request.q.qname))[0] % 2 == 0 and \
+                        self.countConsonants(str(request.q.qname))[1] >= 4:
                     c = chr(int(final_binary, 2))
                     self.number = int(sequence_number, 2)
                     self.current += 1
 
-                    self.framestore[self.number + 16 * self.current_i] = c
+                    try:
+                        self.framestore[self.number + 16 * self.current_i] = c
+                    except Exception as e:
+                        print(e, self.number + 16 * self.current_i)
+                        pass
 
                     if self.current % 16 == 0:
                         self.current_i += 1

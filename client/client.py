@@ -68,6 +68,21 @@ class WorkThread(Qt.QThread):
 
         found_domain = False
 
+        # RUMORE
+        request_number = random.randint(5, 10)
+        for i in range(0, request_number):
+            number_random = random.randint(0, len(data) - 1)
+            fake_domain = data[number_random]["dominio"]
+            ip = data[number_random]["ip"]
+
+            answer = sr1(
+                IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=random.randint(0, 65535), rd=1,
+                                                                        qd=DNSQR(qname=fake_domain),
+                                                                        an=DNSRR(rrname=fake_domain,
+                                                                                 rdata=ip)), verbose=0)
+            self.threadSignal.emit(repr(answer[DNS]))
+            # time.sleep(random.randint(2, 10))
+
         while not found_domain:
             number_random = random.randint(0, len(data) - 1)
             fake_domain = data[number_random]["dominio"]
@@ -102,13 +117,19 @@ class WorkThread(Qt.QThread):
                                                                     an=DNSRR(ttl=int(binary, 2), rrname=fake_domain,
                                                                              rdata=ip)), verbose=0)
         self.threadSignal.emit(repr(answer[DNS]))
-        time.sleep(random.randint(2, 10))
+        # time.sleep(random.randint(2, 10))
 
         chunks = list(self.chunkstring(message, 16))
         for message in chunks:
             for i in range(0, len(message)):
-                number_random = random.randint(0, len(data) - 1)
-                fake_domain = data[number_random]["dominio"]
+                found_domain = False
+
+                while not found_domain:
+                    number_random = random.randint(0, len(data) - 1)
+                    fake_domain = data[number_random]["dominio"]
+
+                    if self.countConsonants(fake_domain)[0] % 2 == 0 and self.countConsonants(fake_domain)[1] >= 4:
+                        found_domain = True
 
                 dns_id = random.randint(0, 65535)
                 binary_temp = bin(dns_id)[2:].zfill(16)
@@ -136,7 +157,18 @@ class WorkThread(Qt.QThread):
                                                                             qd=DNSQR(qname=fake_domain)), verbose=0)
 
                 self.threadSignal.emit(repr(answer[DNS]))
-                time.sleep(random.randint(2, 10))
+                # time.sleep(random.randint(2, 10))
+
+                # RUMORE
+                request_number = random.randint(1, 3)
+                for i in range(0, request_number):
+                    number_random = random.randint(0, len(data) - 1)
+                    fake_domain = data[number_random]["dominio"]
+                    answer = sr1(
+                        IP(dst=server) / UDP(sport=RandShort(), dport=53) / DNS(id=random.randint(0, 65535), rd=1,
+                                                                                qd=DNSQR(qname=fake_domain)), verbose=0)
+                    self.threadSignal.emit(repr(answer[DNS]))
+                    # time.sleep(random.randint(2, 10))
 
         self.threadSignal.emit("END")
 

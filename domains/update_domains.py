@@ -18,11 +18,13 @@ for d in domains:
         answer = sr1(
             IP(dst="127.0.0.1") / UDP(sport=RandShort(), dport=53) / DNS(id=12456, rd=1, qd=DNSQR(qname=d)),
             verbose=0)
-        info = {
-            "dominio": str(d),
-            "ip": str(answer[DNS].an.rdata)
-        }
-        domains_file.append(info)
+
+        if "b'" not in str(answer[DNS].an.rdata):
+            info = {
+                "dominio": str(d),
+                "ip": str(answer[DNS].an.rdata)
+            }
+            domains_file.append(info)
     except Exception as e:
         print(d, e)
 
