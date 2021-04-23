@@ -26,6 +26,6 @@ for d in domains:
     except Exception as e:
         print(d, e)
 
-f = open('dns.json', "w")
+f = open('../client/dns.json', "w")
 json.dump(domains_file, f)
 f.close()

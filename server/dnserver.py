@@ -3,13 +3,16 @@ import os
 import signal
 from datetime import datetime
 from time import sleep
-from struct import unpack as unp
+
+from configparser import ConfigParser
+config = ConfigParser()
+config.read('configuration.ini')
 
 from dnslib import QTYPE, dns
 from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
 
-from crypt import Crypt
+from crypt.crypt import Crypt
 
 SERIAL_NO = int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds())
 
@@ -89,7 +92,7 @@ class Resolver(ProxyResolver):
                 elif i < 8 and i % 2 == 0:
                     pattern += binary[i]
 
-            if pattern == "1011":
+            if pattern == config.get('CONFIG', 'pattern'):
                 self.length = int(final_binary, 2)
                 self.pattern = int(pattern, 2)
                 self.framestore = [None] * self.length

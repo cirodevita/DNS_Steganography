@@ -1,6 +1,7 @@
 import json
 import psutil
 import signal
+from configparser import ConfigParser
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -8,10 +9,10 @@ from scapy.all import *
 from scapy.layers.dns import DNS, DNSQR, DNSRR
 from scapy.layers.inet import IP, UDP
 
-from crypt import Crypt
+from crypt.crypt import Crypt
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QLineEdit, QFileDialog, QLabel, QMessageBox, \
-    QComboBox, QListWidget, QListWidgetItem, QAbstractItemView
+    QListWidget, QListWidgetItem, QAbstractItemView
 from PyQt5.QtCore import pyqtSlot, QDir
 from PyQt5 import Qt
 
@@ -23,7 +24,6 @@ class WorkThread(Qt.QThread):
         super().__init__()
         self.server = server
         self.message = message
-        # self.method = method
 
     def countConsonants(self, string):
         vowel = set("aeiouAEIOU")
@@ -41,6 +41,9 @@ class WorkThread(Qt.QThread):
         return (string[0 + i:length + i] for i in range(0, len(string), length))
 
     def send_message(self, server, message):
+        config = ConfigParser()
+        config.read('configuration.ini')
+
         f = open('dns.json')
         data = json.load(f)
         f.close()
@@ -76,9 +79,9 @@ class WorkThread(Qt.QThread):
         ttl = random.randint(2468, 10468)
         ttl_binary = bin(ttl)[2:].zfill(16)
         len_binary = bin(len(message))[2:].zfill(8)
-        #pattern = random.randint(0, 15)
-        #pattern_bin = bin(pattern)[2:].zfill(4)
-        pattern_bin = '1011'
+        # pattern = random.randint(0, 15)
+        # pattern_bin = bin(pattern)[2:].zfill(4)
+        pattern_bin = config.get('CONFIG', 'pattern')
 
         binary = ''
         j = 0
@@ -99,7 +102,7 @@ class WorkThread(Qt.QThread):
                                                                     an=DNSRR(ttl=int(binary, 2), rrname=fake_domain,
                                                                              rdata=ip)), verbose=0)
         self.threadSignal.emit(repr(answer[DNS]))
-        #time.sleep(random.randint(2, 10))
+        time.sleep(random.randint(2, 10))
 
         chunks = list(self.chunkstring(message, 16))
         for message in chunks:
@@ -133,7 +136,7 @@ class WorkThread(Qt.QThread):
                                                                             qd=DNSQR(qname=fake_domain)), verbose=0)
 
                 self.threadSignal.emit(repr(answer[DNS]))
-                #time.sleep(random.randint(2, 10))
+                time.sleep(random.randint(2, 10))
 
         self.threadSignal.emit("END")
 
@@ -168,11 +171,6 @@ class App(QMainWindow):
         self.textboxServer.move(120, 20)
         self.textboxServer.resize(200, 32)
         self.textboxServer.setPlaceholderText("Enter server DNS address ...")
-
-        # Select method
-        # self.combo_box = QComboBox(self)
-        # self.combo_box.move(340, 20)
-        # self.combo_box.addItems(self.geek_list)
 
         # Message input
         self.nameLabel = QLabel(self)
