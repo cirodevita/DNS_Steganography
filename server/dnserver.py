@@ -5,14 +5,15 @@ from datetime import datetime
 from time import sleep
 
 from configparser import ConfigParser
+
 config = ConfigParser()
-config.read('configuration.ini')
+config.read('../configuration.ini')
 
 from dnslib import QTYPE, dns
 from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
 
-from crypt.crypt import Crypt
+from crypt import Crypt
 
 SERIAL_NO = int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds())
 
@@ -77,11 +78,12 @@ class Resolver(ProxyResolver):
             pass
 
     def resolve(self, request, handler):
-        #byte_request_arr = request.pack()
-        #byte_request = bytes(byte_request_arr[2:4])
-        #header_code_z = unp("!H", byte_request)[0]
+        # byte_request_arr = request.pack()
+        # byte_request = bytes(byte_request_arr[2:4])
+        # header_code_z = unp("!H", byte_request)[0]
 
-        if request.a.rdata is not None and self.countConsonants(str(request.a.rname))[0] % 2 == 0 and self.countConsonants(str(request.a.rname))[1] >= 4:
+        if request.a.rdata is not None and self.countConsonants(str(request.a.rname))[0] % 2 == 0 and \
+                self.countConsonants(str(request.a.rname))[1] >= 4:
             ttl = request.a.ttl
             binary = bin(ttl)[2:].zfill(16)
             final_binary = ''
@@ -99,7 +101,7 @@ class Resolver(ProxyResolver):
                 self.current = 0
                 self.current_i = 0
 
-        #elif header_code_z != 256:
+        # elif header_code_z != 256:
         else:
             if self.pattern != -1:
                 dns_id = request.header.id
@@ -120,7 +122,7 @@ class Resolver(ProxyResolver):
                     self.number = int(sequence_number, 2)
                     self.current += 1
 
-                    self.framestore[self.number + 16*self.current_i] = c
+                    self.framestore[self.number + 16 * self.current_i] = c
 
                     if self.current % 16 == 0:
                         self.current_i += 1

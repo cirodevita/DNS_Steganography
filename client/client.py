@@ -9,12 +9,12 @@ from scapy.all import *
 from scapy.layers.dns import DNS, DNSQR, DNSRR
 from scapy.layers.inet import IP, UDP
 
-from crypt.crypt import Crypt
-
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QLineEdit, QFileDialog, QLabel, QMessageBox, \
     QListWidget, QListWidgetItem, QAbstractItemView
 from PyQt5.QtCore import pyqtSlot, QDir
 from PyQt5 import Qt
+
+from crypt import Crypt
 
 
 class WorkThread(Qt.QThread):
@@ -42,7 +42,7 @@ class WorkThread(Qt.QThread):
 
     def send_message(self, server, message):
         config = ConfigParser()
-        config.read('configuration.ini')
+        config.read('../configuration.ini')
 
         f = open('dns.json')
         data = json.load(f)

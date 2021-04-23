@@ -1,7 +1,12 @@
 import base64
 from Crypto.Cipher import XOR
 
-password = "/A%D*G-KaPdSgVkY"
+from configparser import ConfigParser
+
+config = ConfigParser()
+config.read('../configuration.ini')
+
+password = config.get('CONFIG', 'password')
 
 
 class Crypt:
