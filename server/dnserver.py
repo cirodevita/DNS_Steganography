@@ -1,5 +1,5 @@
 import logging
-import sys
+import re
 import os
 import signal
 from datetime import datetime
@@ -53,6 +53,7 @@ class Resolver(ProxyResolver):
         self.current = 0
         self.current_i = 0
         self.pattern = -1
+        self.allFrames = []
 
     def countConsonants(self, string):
         vowel = set("aeiouAEIOU")
@@ -68,6 +69,7 @@ class Resolver(ProxyResolver):
 
     def save_on_file(self, payload):
         self.framestore = []
+        self.allFrames = []
 
         try:
             print(payload)
@@ -80,10 +82,6 @@ class Resolver(ProxyResolver):
             pass
 
     def resolve(self, request, handler):
-        # byte_request_arr = request.pack()
-        # byte_request = bytes(byte_request_arr[2:4])
-        # header_code_z = unp("!H", byte_request)[0]
-
         if request.a.rdata is not None and self.countConsonants(str(request.a.rname))[0] % 2 == 0 and \
                 self.countConsonants(str(request.a.rname))[1] >= 4:
             ttl = request.a.ttl
@@ -100,10 +98,8 @@ class Resolver(ProxyResolver):
                 self.length = int(final_binary, 2)
                 self.pattern = int(pattern, 2)
                 self.framestore = [None] * self.length
-                self.current = 0
                 self.current_i = 0
-
-        # elif header_code_z != 256:
+                self.allFrames.append("no")
         else:
             if self.pattern != -1:
                 dns_id = request.header.id
@@ -119,27 +115,38 @@ class Resolver(ProxyResolver):
                     else:
                         pattern += binary[i]
 
-                if int(pattern, 2) == self.pattern and self.countConsonants(str(request.q.qname))[0] % 2 == 0 and \
-                        self.countConsonants(str(request.q.qname))[1] >= 4:
-                    c = chr(int(final_binary, 2))
-                    self.number = int(sequence_number, 2)
-                    self.current += 1
+                c = chr(int(final_binary, 2))
+                search = re.compile(r'[A-Za-z0-9+/= ]').search
 
-                    try:
-                        self.framestore[self.number + 16 * self.current_i] = c
-                    except Exception as e:
-                        print(e, self.number + 16 * self.current_i)
-                        pass
+                if bool(search(c)):
+                    if int(pattern, 2) == self.pattern and self.countConsonants(str(request.q.qname))[0] % 2 == 0 and \
+                            self.countConsonants(str(request.q.qname))[1] >= 4:
+                        if self.allFrames[-1] != "ok":
+                            self.allFrames.append("ok")
+                            self.number = int(sequence_number, 2)
 
-                    if self.current % 16 == 0:
-                        self.current_i += 1
+                            try:
+                                self.framestore[self.number + 16 * self.current_i] = c
+                            except Exception as e:
+                                print(e, self.number + 16 * self.current_i)
+                                pass
 
-                    if None not in self.framestore:
-                        self.current = 0
-                        self.current_i = 0
-                        self.pattern = -1
-                        combined_payloads = ''.join(self.framestore)
-                        self.save_on_file(combined_payloads)
+                            if self.number == 15:
+                                self.current_i += 1
+
+                            print(self.framestore)
+                            if None not in self.framestore:
+                                self.current_i = 0
+                                self.pattern = -1
+                                combined_payloads = ''.join(self.framestore)
+                                self.save_on_file(combined_payloads)
+                        else:
+                            print("False Positive")
+                            self.allFrames.append("no")
+                    else:
+                        self.allFrames.append("no")
+                else:
+                    self.allFrames.append("no")
 
         return super().resolve(request, handler)
 
