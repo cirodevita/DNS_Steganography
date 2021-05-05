@@ -1,5 +1,5 @@
 import json
-import psutil
+import time
 import signal
 from configparser import ConfigParser
 
@@ -51,22 +51,9 @@ class WorkThread(Qt.QThread):
         message = Crypt.encrypt(message)
         self.threadSignal.emit(message)
 
-        start = False
-
-        while not start:
-            for proc in psutil.process_iter():
-                try:
-                    processName = proc.name()
-                    processID = proc.pid
-                    if "Teams" in processName:
-                        start = True
-                    else:
-                        # self.threadSignal.emit("Teams non in esecuzione")
-                        pass
-                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                    pass
-
         found_domain = False
+
+        start_time = time.time()
 
         # RUMORE
         request_number = random.randint(5, 10)
@@ -170,7 +157,8 @@ class WorkThread(Qt.QThread):
                     self.threadSignal.emit(repr(answer[DNS]))
                     # time.sleep(random.randint(2, 10))
 
-        self.threadSignal.emit("END")
+        end_time = (time.time() - start_time)
+        self.threadSignal.emit("END in " + str(end_time) + " seconds")
 
     def run(self, *args, **kwargs):
         self.send_message(self.server, self.message)
@@ -266,7 +254,7 @@ class App(QMainWindow):
         self.list_widget.addItem(QListWidgetItem(value))
         QAbstractItemView.scrollToBottom(self.list_widget)
 
-        if value == "END":
+        if "END" in value:
             self.thread = None
             self.button.setText("Send message")
             self.textbox.setText("")

@@ -134,7 +134,6 @@ class Resolver(ProxyResolver):
                             if self.number == 15:
                                 self.current_i += 1
 
-                            print(self.framestore)
                             if None not in self.framestore:
                                 self.current_i = 0
                                 self.pattern = -1

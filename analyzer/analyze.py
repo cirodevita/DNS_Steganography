@@ -1,6 +1,7 @@
 import pcapy
+import sys
 
-reader = pcapy.open_offline("dns_4_32bytes.pcap")
+reader = pcapy.open_offline(sys.argv[1])
 sum = 0
 
 while True:
