@@ -11,6 +11,9 @@ import importlib.machinery
 loader = importlib.machinery.SourceFileLoader('crypt', config.get('CONFIG', 'absolute_path') + 'crypt/crypt.py')
 handle = loader.load_module('crypt')
 
+global_func = importlib.machinery.SourceFileLoader('global', config.get('CONFIG', 'absolute_path') + 'global/global.py')
+handle_glob = global_func.load_module('global')
+
 from scapy.all import *
 from scapy.layers.dns import DNS, DNSQR, DNSRR
 from scapy.layers.inet import IP, UDP
@@ -28,18 +31,6 @@ class WorkThread(Qt.QThread):
         super().__init__()
         self.server = server
         self.message = message
-
-    def countConsonants(self, string):
-        vowel = set("aeiouAEIOU")
-        v_count = 0
-        c_count = 0
-        for i in string:
-            if i in vowel:
-                v_count = v_count + 1
-            elif ('a' <= i <= 'z') or ('A' <= i <= 'Z'):
-                c_count += 1
-
-        return c_count, v_count
 
     def chunkstring(self, string, length):
         return (string[0 + i:length + i] for i in range(0, len(string), length))
@@ -76,7 +67,7 @@ class WorkThread(Qt.QThread):
             fake_domain = data[number_random]["dominio"]
             ip = data[number_random]["ip"]
 
-            if self.countConsonants(fake_domain)[0] % 2 == 0 and self.countConsonants(fake_domain)[1] >= 4:
+            if handle_glob.countConsonantsandVolwes(fake_domain)[0] % 2 == 0 and handle_glob.countConsonantsandVolwes(fake_domain)[1] >= 4:
                 found_domain = True
 
         ttl = random.randint(2468, 10468)
@@ -116,7 +107,7 @@ class WorkThread(Qt.QThread):
                     number_random = random.randint(0, len(data) - 1)
                     fake_domain = data[number_random]["dominio"]
 
-                    if self.countConsonants(fake_domain)[0] % 2 == 0 and self.countConsonants(fake_domain)[1] >= 4:
+                    if handle_glob.countConsonantsandVolwes(fake_domain)[0] % 2 == 0 and handle_glob.countConsonantsandVolwes(fake_domain)[1] >= 4:
                         found_domain = True
 
                 dns_id = random.randint(0, 65535)

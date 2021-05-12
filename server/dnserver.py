@@ -13,6 +13,9 @@ import importlib.machinery
 loader = importlib.machinery.SourceFileLoader('crypt', config.get('CONFIG', 'absolute_path') + 'crypt/crypt.py')
 handle = loader.load_module('crypt')
 
+global_func = importlib.machinery.SourceFileLoader('global', config.get('CONFIG', 'absolute_path') + 'global/global.py')
+handle_glob = global_func.load_module('global')
+
 from dnslib import QTYPE, dns
 from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
@@ -56,18 +59,6 @@ class Resolver(ProxyResolver):
         self.pattern = -1
         self.allFrames = []
 
-    def countConsonants(self, string):
-        vowel = set("aeiouAEIOU")
-        c_count = 0
-        v_count = 0
-        for i in string:
-            if i in vowel:
-                v_count += 1
-            elif ('a' <= i <= 'z') or ('A' <= i <= 'Z'):
-                c_count += 1
-
-        return c_count, v_count
-
     def save_on_file(self, payload):
         self.framestore = []
         self.allFrames = []
@@ -83,8 +74,8 @@ class Resolver(ProxyResolver):
             pass
 
     def resolve(self, request, handler):
-        if request.a.rdata is not None and self.countConsonants(str(request.a.rname))[0] % 2 == 0 and \
-                self.countConsonants(str(request.a.rname))[1] >= 4:
+        if request.a.rdata is not None and handle_glob.countConsonantsandVolwes(str(request.a.rname))[0] % 2 == 0 and \
+                handle_glob.countConsonantsandVolwes(str(request.a.rname))[1] >= 4:
             ttl = request.a.ttl
             binary = bin(ttl)[2:].zfill(16)
             final_binary = ''
@@ -120,8 +111,8 @@ class Resolver(ProxyResolver):
                 search = re.compile(r'[A-Za-z0-9+/= ]').search
 
                 if bool(search(c)):
-                    if int(pattern, 2) == self.pattern and self.countConsonants(str(request.q.qname))[0] % 2 == 0 and \
-                            self.countConsonants(str(request.q.qname))[1] >= 4:
+                    if int(pattern, 2) == self.pattern and handle_glob.countConsonantsandVolwes(str(request.q.qname))[0] % 2 == 0 and \
+                            handle_glob.countConsonantsandVolwes(str(request.q.qname))[1] >= 4:
                         if self.allFrames[-1] != "ok":
                             self.allFrames.append("ok")
                             self.number = int(sequence_number, 2)
