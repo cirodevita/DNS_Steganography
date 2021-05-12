@@ -6,15 +6,16 @@ from datetime import datetime
 from time import sleep
 
 from configparser import ConfigParser
-
 config = ConfigParser()
 config.read('../configuration.ini')
+
+import importlib.machinery
+loader = importlib.machinery.SourceFileLoader('crypt', config.get('CONFIG', 'absolute_path') + 'crypt/crypt.py')
+handle = loader.load_module('crypt')
 
 from dnslib import QTYPE, dns
 from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
-
-from crypt import Crypt
 
 SERIAL_NO = int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds())
 
@@ -73,7 +74,7 @@ class Resolver(ProxyResolver):
 
         try:
             print(payload)
-            message = Crypt.decrypt(payload)
+            message = handle.decrypt(payload)
             f = open("received.txt", "w")
             f.write(message)
             f.close()

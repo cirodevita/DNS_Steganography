@@ -1,9 +1,15 @@
 import json
-import time
-import signal
-from configparser import ConfigParser
 
+import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+from configparser import ConfigParser
+config = ConfigParser()
+config.read('../configuration.ini')
+
+import importlib.machinery
+loader = importlib.machinery.SourceFileLoader('crypt', config.get('CONFIG', 'absolute_path') + 'crypt/crypt.py')
+handle = loader.load_module('crypt')
 
 from scapy.all import *
 from scapy.layers.dns import DNS, DNSQR, DNSRR
@@ -13,8 +19,6 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QLineEdit, Q
     QListWidget, QListWidgetItem, QAbstractItemView
 from PyQt5.QtCore import pyqtSlot, QDir
 from PyQt5 import Qt
-
-from crypt import Crypt
 
 
 class WorkThread(Qt.QThread):
@@ -41,14 +45,11 @@ class WorkThread(Qt.QThread):
         return (string[0 + i:length + i] for i in range(0, len(string), length))
 
     def send_message(self, server, message):
-        config = ConfigParser()
-        config.read('../configuration.ini')
-
         f = open('dns.json')
         data = json.load(f)
         f.close()
 
-        message = Crypt.encrypt(message)
+        message = handle.encrypt(message)
         self.threadSignal.emit(message)
 
         found_domain = False
